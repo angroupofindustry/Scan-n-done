@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scan n done – Prototype</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; --text:#111827; --brand:#2563eb; --brand-2:#1e40af;
+      --line:#d1d5db; --shadow:0 10px 20px rgba(0,0,0,.08); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    a{color:inherit;text-decoration:none}
+    .hidden{display:none!important}
+    .app{min-height:100%;display:flex;flex-direction:column}
+    .topbar{position:sticky;top:0;z-index:40;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;gap:.75rem;padding:.6rem .9rem}
+    .avatar{width:36px;height:36px;border-radius:50%;border:2px solid #e5e7eb;background:url('https://i.pravatar.cc/100?img=12') center/cover}
+    .hello{font-weight:700;font-size:1.25rem;flex:1}
+    .iconbtn{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;transition:.2s}
+    .iconbtn:hover{transform:translateY(-1px)}
+
+    /* Search */
+    .searchwrap{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:999px;padding:.5rem .75rem;flex:1;max-width:760px;margin:.35rem auto}
+    .hamburger{display:grid;gap:3px}
+    .hamburger span{width:18px;height:2px;background:#374151;border-radius:2px}
+    .searchwrap input{flex:1;border:none;outline:none;font-size:.98rem}
+
+    /* Tabs */
+    .tabs{display:flex;gap:.5rem;flex-wrap:wrap;padding:.75rem .9rem}
+    .chip{background:#e8edff;color:#1e3a8a;border:1px solid #c7d2fe;border-radius:999px;padding:.45rem .8rem;font-weight:600;font-size:.9rem;cursor:pointer}
+
+    /* Card */
+    .card{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);box-shadow:var(--shadow);padding:1rem}
+    .profilecard{display:grid;grid-template-columns:72px 1fr;gap:.9rem;align-items:center}
+    .pimg{width:72px;height:72px;border-radius:14px;background:url('https://i.pravatar.cc/150?img=11') center/cover}
+    .btnrow{display:flex;gap:.75rem;margin-top:.65rem}
+    .btn{background:#eef2ff;color:#1e40af;border:1px solid #c7d2fe;padding:.55rem .9rem;border-radius:12px;font-weight:600;cursor:pointer}
+
+    /* Scanner */
+    .scanner{margin:1rem auto 0;max-width:600px}
+    .scanbox{position:relative;aspect-ratio:1/1;width:100%;background:#f9fafb;border:2px dashed #cbd5e1;border-radius:24px;display:grid;place-items:center;overflow:hidden}
+    .scanbox h3{position:absolute;top:16px;font-size:1.4rem;margin:0}
+    .scan-icon{width:72px;height:72px;border-radius:50%;border:3px solid #cbd5e1;display:grid;place-items:center;font-size:28px}
+    .scanline{position:absolute;left:8px;right:8px;height:3px;background:linear-gradient(90deg, transparent, rgba(37,99,235,.9), transparent);border-radius:6px;box-shadow:0 0 16px rgba(37,99,235,.6)}
+    .scanline.anim{animation:scan 2.7s ease-in-out infinite}
+    @keyframes scan{0%{top:14%}50%{top:86%}100%{top:14%}}
+    .pulse:before{content:"";position:absolute;width:60%;height:60%;border:2px solid rgba(37,99,235,.55);border-radius:24px;animation:pulse 2.2s infinite}
+    @keyframes pulse{0%{transform:scale(.9);opacity:.8}70%{transform:scale(1.15);opacity:0}100%{opacity:0}}
+    .codebtn{display:block;margin:.9rem auto 0;background:var(--brand);color:#fff;border:none;padding:.7rem 1rem;border-radius:12px;font-weight:700;cursor:pointer}
+
+    /* Bottom Nav */
+    .bottomnav{position:sticky;bottom:0;z-index:30;background:#fff;border-top:1px solid #e5e7eb;display:grid;grid-template-columns:repeat(5,1fr);gap:.25rem;padding:.35rem .35rem}
+    .navitem{display:grid;justify-items:center;padding:.35rem;border-radius:12px;cursor:pointer}
+    .navitem.active{background:#eef2ff;color:#1e40af}
+    .navlabel{font-size:.8rem}
+
+    /* Drawer */
+    .drawer{position:fixed;inset:0;z-index:50;display:none}
+    .drawer.open{display:block}
+    .drawer .shade{position:absolute;inset:0;background:rgba(0,0,0,.25)}
+    .drawer .panel{position:absolute;left:0;top:0;bottom:0;width:min(86vw,360px);background:#fff;box-shadow:var(--shadow);padding:1rem;overflow:auto}
+
+    /* Screens */
+    .screen{display:none;max-width:1100px;width:100%;margin:0 auto;padding-bottom:70px}
+    .screen.active{display:block}
+
+    /* Login */
+    .login{display:grid;place-items:center;height:100vh;padding:1rem}
+    .login .box{background:#fff;border:1px solid #e5e7eb;border-radius:22px;box-shadow:var(--shadow);padding:2rem;max-width:420px;width:100%;text-align:center}
+    .input{width:100%;padding:.7rem .9rem;border:1px solid #e5e7eb;border-radius:12px;margin:.4rem 0}
+    .primary{background:var(--brand);color:#fff;border:none;padding:.8rem 1rem;border-radius:12px;font-weight:700;cursor:pointer}
+    .link{color:var(--brand);font-weight:600;cursor:pointer}
+
+    /* Responsive tweaks */
+    @media(min-width:900px){
+      .topgrid{display:grid;grid-template-columns:1fr 480px;align-items:start;gap:1rem}
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <section id="login" class="login screen active">
+    <div class="box">
+      <h1 style="margin:.2rem 0 1rem">Welcome to: Scan n done</h1>
+      <p class="muted" style="color:var(--muted)">Sign in to continue</p>
+      <input id="login-email" class="input" placeholder="Email or phone" />
+      <input id="login-pass" class="input" placeholder="Password" type="password" />
+      <button class="primary" onclick="doLogin()">Log In</button>
+      <p style="margin-top:1rem;color:var(--muted)">No account? <span class="link" onclick="alert('Demo: account created automatically on first login.')">Create one</span></p>
+    </div>
+  </section>
+
+  <!-- APP SHELL -->
+  <div id="app" class="app hidden">
+    <div class="topbar">
+      <div class="avatar" title="Profile"></div>
+      <div class="hello" id="hello">Hi Ameen!</div>
+      <button class="iconbtn" id="notifBtn" title="Notifications">🔔</button>
+      <button class="iconbtn" id="settingsBtn" title="Settings">⚙️</button>
+    </div>
+
+    <div class="searchwrap" style="margin-top:.5rem">
+      <div class="iconbtn" id="menuBtn" title="Menu" style="border:none;background:transparent">
+        <div class="hamburger" aria-label="Open Menu"><span></span><span></span><span></span></div>
+      </div>
+      <input id="search" placeholder="Search for Documents" />
+      <button class="iconbtn" title="Search" onclick="doSearch()">🔍</button>
+    </div>
+
+    <div class="tabs">
+      <span class="chip" onclick="toast('History opened')">History</span>
+      <span class="chip" onclick="toast('Issued Documents')">Issued Documents</span>
+      <span class="chip" onclick="openAccess()">Access Request</span>
+    </div>
+
+    <main id="home" class="screen active" style="padding:.5rem .9rem 1rem">
+      <div class="topgrid">
+        <section class="card">
+          <div class="profilecard">
+            <div class="pimg"></div>
+            <div>
+              <h2 style="margin:0 0 .35rem">Mohammed Ameen</h2>
+              <div style="color:var(--muted);font-weight:600">DOB: 11-04-20XX</div>
+              <div style="color:var(--muted);font-weight:600">Gender: Male</div>
+              <div style="color:var(--muted);font-weight:600">UI Designer</div>
+              <div class="btnrow">
+                <button class="btn" onclick="openEdit()">Edit Profile</button>
+                <button class="btn" onclick="openManage()">Manage Profile</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="scanner">
+          <div class="scanbox pulse" id="scanbox">
+            <h3>Ready to Scan?</h3>
+            <div class="scanline" id="scanline"></div>
+            <div class="scan-icon">▢</div>
+          </div>
+          <button class="codebtn" onclick="go('#enter-code')">Enter Code</button>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:1rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.9rem">
+          <button class="btn" style="height:90px;background:#e9efff" onclick="openSavedDocs()">View Saved<br/>Documents</button>
+          <button class="btn" style="height:90px;background:#e9efff" onclick="openSavedInfo()">View Saved<br/>Information</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ENTER CODE SCREEN -->
+    <section id="enter-code" class="screen" style="padding:1rem">
+      <div class="card" style="max-width:640px;margin:0 auto">
+        <h2 style="margin-top:0">Enter Code</h2>
+        <p class="muted" style="color:var(--muted)">Paste a code shared by RTO, hotels, colleges, etc. We’ll auto‑fill your forms securely.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <input id="codeInput" class="input" placeholder="e.g. RTO123, HOTEL88" style="flex:1" />
+          <button class="primary" onclick="redeemCode()">Proceed</button>
+        </div>
+        <div id="codeResult" style="margin-top:1rem"></div>
+      </div>
+    </section>
+
+    <!-- SIMPLE VIEWS FOR DEMO -->
+    <section id="settings" class="screen" style="padding:1rem">
+      <div class="card"><h2 style="margin:.2rem 0">Settings</h2>
+        <label style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0"><input type="checkbox" id="darkToggle"> Dark mode</label>
+        <label style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0"><input type="checkbox" checked> Face/Touch ID</label>
+        <button class="btn" onclick="go('#home')">Back</button>
+      </div>
+    </section>
+
+    <section id="notifications" class="screen" style="padding:1rem">
+      <div class="card"><h2 style="margin-top:0">Notifications</h2>
+        <ul id="notifList" style="padding-left:1rem;line-height:1.8"></ul>
+        <button class="btn" onclick="go('#home')">Back</button>
+      </div>
+    </section>
+
+    <nav class="bottomnav">
+      <div class="navitem active" onclick="go('#home', this)">🏠<div class="navlabel">Home</div></div>
+      <div class="navitem" onclick="toast('Your Info coming soon')">👤<div class="navlabel">Your Info</div></div>
+      <div class="navitem" onclick="toast('Vault opened')">🧭<div class="navlabel">Vault</div></div>
+      <div class="navitem" onclick="toast('Categories coming soon')">🗂️<div class="navlabel">Categories</div></div>
+      <div class="navitem" onclick="toast('Family coming soon')">👨‍👩‍👧<div class="navlabel">Family</div></div>
+    </nav>
+  </div>
+
+  <!-- Drawer / Menu -->
+  <div class="drawer" id="drawer">
+    <div class="shade" onclick="toggleDrawer(false)"></div>
+    <aside class="panel">
+      <h3 style="margin:.2rem 0 1rem">Menu</h3>
+      <div style="display:grid;gap:.55rem">
+        <button class="btn" onclick="go('#home');toggleDrawer(false)">Home</button>
+        <button class="btn" onclick="go('#enter-code');toggleDrawer(false)">Enter Code</button>
+        <button class="btn" onclick="openSavedDocs();toggleDrawer(false)">Saved Documents</button>
+        <button class="btn" onclick="openSavedInfo();toggleDrawer(false)">Saved Information</button>
+        <button class="btn" onclick="openManage();toggleDrawer(false)">Manage Profile</button>
+        <button class="btn" onclick="openEdit();toggleDrawer(false)">Edit Profile</button>
+        <button class="btn" onclick="go('#settings');toggleDrawer(false)">Settings</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#111827;color:#fff;padding:.6rem .9rem;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;z-index:60"></div>
+
+  <script>
+    const screens=[...document.querySelectorAll('.screen')];
+    const app=document.getElementById('app');
+    const login=document.getElementById('login');
+    const notifBtn=document.getElementById('notifBtn');
+    const settingsBtn=document.getElementById('settingsBtn');
+    const menuBtn=document.getElementById('menuBtn');
+    const drawer=document.getElementById('drawer');
+    const toastEl=document.getElementById('toast');
+    const scanbox=document.getElementById('scanbox');
+    const scanline=document.getElementById('scanline');
+
+    function toast(msg){
+      toastEl.textContent=msg; toastEl.style.opacity=1; clearTimeout(toastEl._t);
+      toastEl._t=setTimeout(()=>toastEl.style.opacity=0, 1700);
+    }
+
+    function doLogin(){
+      const name=(document.getElementById('login-email').value||'Ameen').split('@')[0];
+      document.getElementById('hello').textContent=`Hi ${capitalize(name)}!`;
+      login.classList.remove('active'); login.classList.add('hidden');
+      app.classList.remove('hidden');
+      go('#home');
+      toast('Logged in');
+      loadNotifications();
+    }
+
+    function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+    function go(hash, el){
+      window.location.hash=hash;
+      screens.forEach(s=>s.classList.remove('active'));
+      document.querySelector(hash).classList.add('active');
+      document.querySelectorAll('.bottomnav .navitem').forEach(n=>n.classList.remove('active'));
+      if(el) el.classList.add('active');
+    }
+
+    function toggleDrawer(open){drawer.classList.toggle('open', open!==undefined?open:!drawer.classList.contains('open'))}
+
+    menuBtn.addEventListener('click',()=>toggleDrawer());
+    settingsBtn.addEventListener('click',()=>go('#settings'));
+    notifBtn.addEventListener('click',()=>go('#notifications'));
+
+    function doSearch(){
+      const q=document.getElementById('search').value.trim();
+      if(!q){toast('Type to search…');return}
+      toast(`Searching “${q}”`);
+    }
+
+    function openAccess(){toast('Access Request opened')}
+    function openEdit(){promptModal('Edit Profile','Name, DOB, etc. (demo)')}
+    function openManage(){promptModal('Manage Profile','Link Aadhar, PAN, passport (demo)')}
+    function openSavedDocs(){promptModal('Saved Documents','Aadhar.pdf, PAN.pdf… (demo)')}
+    function openSavedInfo(){promptModal('Saved Information','Auto‑fill fields preview (demo)')}
+
+    function promptModal(title, body){
+      const ok=confirm(`${title}\n\n${body}\n\nThis is a prototype interaction.`);
+      if(ok) toast(title+" done");
+    }
+
+    // Scanner animation + camera preview if available
+    let stream;
+    scanbox.addEventListener('click', async ()=>{
+      toast('Scanning… tap again to stop');
+      scanline.classList.add('anim');
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        const video=document.createElement('video');
+        video.autoplay=true; video.playsInline=true; video.srcObject=stream; video.muted=true;
+        Object.assign(video.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:'cover',filter:'grayscale(20%) contrast(110%)'});
+        scanbox.appendChild(video);
+        // After 2.5s pretend we decoded a QR and filled details
+        setTimeout(()=>{
+          if(!scanbox.contains(video)) return;
+          autoFillFromScan({
+            fullName:'Mohammed Ameen', dob:'11-04-20XX', gender:'Male', occupation:'UI Designer', source:'Camera Scan'
+          });
+        }, 2500);
+      }catch(e){
+        // Fallback to pure animation
+        setTimeout(()=>autoFillFromScan({fullName:'Mohammed Ameen', dob:'11-04-20XX', gender:'Male', occupation:'UI Designer', source:'Simulated Scan'}),2400);
+      }
+    });
+
+    scanbox.addEventListener('dblclick', stopScan);
+    function stopScan(){
+      scanline.classList.remove('anim');
+      const v=scanbox.querySelector('video'); if(v){v.srcObject=null; v.remove()}
+      if(stream){stream.getTracks().forEach(t=>t.stop()); stream=null}
+      toast('Scan stopped');
+    }
+
+    function autoFillFromScan(data){
+      stopScan();
+      toast(`${data.source}: details captured`);
+      // In a real app this would update global profile + offer autofill. Here we just show a message.
+      const list=document.getElementById('notifList');
+      const li=document.createElement('li');
+      li.textContent=`${new Date().toLocaleTimeString()} • ${data.source} – Ready to fill forms for RTO/Hotels/College`;
+      list.prepend(li);
+    }
+
+    // Enter Code demo
+    function redeemCode(){
+      const code=document.getElementById('codeInput').value.trim().toUpperCase();
+      if(!code){toast('Enter a code');return}
+      const map={
+        'RTO123':{purpose:'RTO Vehicle Registration', fields:['Owner Name','DOB','Aadhar','Address','Vehicle Model']},
+        'HOTEL88':{purpose:'Hotel e‑KYC', fields:['Guest Name','ID Type','ID Number','Check‑in Date']},
+        'COLL45':{purpose:'College Admission', fields:['Student Name','DOB','Category','Marks %','Guardian Mobile']}
+      };
+      const info=map[code]||{purpose:'Generic Form', fields:['Full Name','DOB','Email','Phone']};
+      document.getElementById('codeResult').innerHTML=
+        `<div class="card" style="background:#f8fafc"><b>Code:</b> ${code}<br/><b>Purpose:</b> ${info.purpose}<hr/>`
+        + `<b>Auto‑fillable fields</b><ul>${info.fields.map(f=>`<li>${f} – <i>will be prefilled</i></li>`).join('')}</ul>`
+        + `<button class="primary" onclick="toast('Form opened with auto‑fill (demo)')">Open Form</button></div>`;
+    }
+
+    function loadNotifications(){
+      const list=document.getElementById('notifList');
+      list.innerHTML='';
+      ['Passport verified','PAN linked to profile','3 new access requests'].forEach(t=>{
+        const li=document.createElement('li'); li.textContent=t; list.appendChild(li);
+      })
+    }
+
+    // Dark mode
+    document.getElementById('darkToggle').addEventListener('change', (e)=>{
+      document.documentElement.style.setProperty('--bg', e.target.checked?'#0b1220':'#f6f7fb');
+      document.documentElement.style.setProperty('--card', e.target.checked?'#0f172a':'#ffffff');
+      document.documentElement.style.setProperty('--text', e.target.checked?'#e5e7eb':'#111827');
+      document.body.style.background=getComputedStyle(document.documentElement).getPropertyValue('--bg');
+    });
+
+    // Hash routing on load if needed
+    window.addEventListener('hashchange',()=>{
+      if(!app.classList.contains('hidden')){
+        const h=location.hash||'#home';
+        screens.forEach(s=>s.classList.remove('active'));
+        (document.querySelector(h)||document.querySelector('#home')).classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html>
